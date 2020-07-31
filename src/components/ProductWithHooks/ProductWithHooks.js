@@ -25,25 +25,46 @@ const products = [
   }
 ];
 
-function cartReducer(state, product) {
-  return [...state, product]
+function cartReducer(state, action) {
+  switch (action.type) {
+    case 'add':
+      return [...state, action.product];
+    case 'remove':
+      const productIndex = state.findIndex(item => item.name === action.product.name);
+      if (productIndex < 0) {
+        return state;
+      }
+
+      const update = [...state];
+      update.splice(productIndex, 1);
+      return update;
+    default:
+      return state;
+  }
 }
 
-function totalReducer(state, price) {
-  return state + price;
+function totalReducer(state, action) {
+  if(action.type === 'add') {
+    return state + action.price;
+  }
+  return state - action.price
+}
+
+function getTotal(cart) {
+  const total = cart.reduce((totalCost, item) => totalCost + item.price, 0);
+  return total.toLocaleString(undefined, currencyOptions)
 }
 
 export default function ProductWithHooks() {
   const [cart, setCart] = useReducer(cartReducer, []);
   const [total, setTotal] = useReducer(totalReducer, 0);
 
-  function getTotal(total ) {
-    return total.toLocaleString(undefined, currencyOptions)
+  function add(product) {
+    setCart({ product, type: 'add' });
   }
 
-  function add(product) {
-    setCart(product.name);
-    setTotal(product.price);
+  function remove(product) {
+    setCart({ product, type: 'remove' });
   }
 
   return(
@@ -51,15 +72,15 @@ export default function ProductWithHooks() {
       <div>
         Shopping Cart: {cart.length} total items.
       </div>
-      <div>Total: {getTotal(total)}</div>
+      <div>Total: { getTotal(cart) }</div>
         <div>
         {products.map(product => (
           <div key={product.name}>
             <div className="product-with-hooks">
-              <span role="img" aria-label={product.name}>{product.emoji}</span>
+              <span role="img" aria-label={ product.name }>{ product.emoji }</span>
             </div>
             <button onClick={ () => add(product) }>Add</button>
-            <button>Remove</button>
+            <button onClick={ () => remove(product) }>Remove</button>
           </div>
         ))}
       </div>
